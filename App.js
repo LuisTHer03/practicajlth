@@ -1,57 +1,71 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Alert, Image, TouchableOpacity } from 'react-native';
-import 'react-native-gesture-handler';
-import { createStackNavigator } from '@react-navigation/stack';
-import { NavigationContainer } from '@react-navigation/native';
-import Login from './screens/Login';
-import Home from './screens/Home';
-import TabsNavigator from './screens/stacks/TabsNavigator';
+import { StyleSheet, Text, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { NavigationContainer } from "@react-navigation/native";
+import { createStackNavigator } from "@react-navigation/stack";
+import ScreenLogin from "./screens/ScreenLogin";
+import TabsNavigator from "./screens/stacks/TabsNavigator";
+import { auth } from "./config_firebase";
+import { onAuthStateChanged } from "firebase/auth";
 
-export default function App() {
-  // creacion de la navegacion
-  const Stack = createStackNavigator();
+const Stack = createStackNavigator();
 
-  function MyStack() {
-    return (
-      <Stack.Navigator>
+function MyStack({ user }) {
+  return (
+    <Stack.Navigator>
+      {user ? (
         <Stack.Screen 
-          options={{
-            title: 'Login',
-            headerTitleStyle:{
-              fontWeight: 'bold',
-            },
-            headerStyle: {
-              backgroundColor: '#D63384', // Un rosa elegante
-            },
-            headerTintColor: '#FFFFFF',
-            headerTitleAlign: 'center',
-          }}
-          name="Login" 
-          component={Login} 
-        />
-        <Stack.Screen
+          name="TabsNavigator" 
+          component={TabsNavigator} 
           options={{
             title: 'BodaPlan',
-            headerTitleStyle:{
-              fontWeight: 'bold',
-            },
-            headerStyle: {
-              backgroundColor: '#D63384', // Un rosa elegante
-            },
+            headerTitleStyle: { fontWeight: 'bold' },
+            headerStyle: { backgroundColor: '#D63384' },
             headerTintColor: '#FFFFFF',
             headerTitleAlign: 'center',
           }}        
-          name="TabsNavigator" 
-          component={TabsNavigator} 
         />
-      </Stack.Navigator>
+      ) : (
+        <Stack.Screen 
+          name="ScreenLogin" 
+          component={ScreenLogin} 
+          options={{
+            title: 'Login',
+            headerTitleStyle: { fontWeight: 'bold' },
+            headerStyle: { backgroundColor: '#D63384' },
+            headerTintColor: '#FFFFFF',
+            headerTitleAlign: 'center',
+          }}        
+        />
+      )}
+    </Stack.Navigator>
+  );
+}
+
+export default function App() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text>Cargando...</Text>
+      </View>
     );
   }
+
   return (
     <NavigationContainer>
-      <MyStack />
+      <MyStack user={user} />
     </NavigationContainer>
   );
 }
 
-const styles = StyleSheet.create({ });
+const styles = StyleSheet.create({});
